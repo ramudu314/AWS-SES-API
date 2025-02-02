@@ -7,15 +7,18 @@ function EmailForm({ onEmailSent }) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [message, setMessage] = useState('');
-  const [emailLimit, setEmailLimit] = useState(10); // default email limit
-  const [emailsSent, setEmailsSent] = useState(0); // default emails sent
-  const [emailWarmUp, setEmailWarmUp] = useState(false); // Email warm-up flag
+  const [emailLimit, setEmailLimit] = useState(10); 
+  const [emailsSent, setEmailsSent] = useState(0); 
+  const [emailWarmUp, setEmailWarmUp] = useState(false); 
+
+  // Fetch the backend URL from environment variables
+  const backendURL = process.env.REACT_APP_BACKEND_URL || 'https://aws-ses-api-yw8u.vercel.app/';
 
   // Fetch email stats on component mount
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get('http://localhost:8080/stats');
+        const response = await axios.get(`${backendURL}/stats`);
         setEmailsSent(response.data.emails_sent);
         setEmailLimit(response.data.email_limit);
       } catch (error) {
@@ -23,12 +26,12 @@ function EmailForm({ onEmailSent }) {
       }
     };
     fetchStats();
-  }, []);
+  }, [backendURL]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8080/sendEmail', {
+      const response = await axios.post(`${backendURL}/sendEmail`, { 
         to,
         subject,
         body,
@@ -39,7 +42,7 @@ function EmailForm({ onEmailSent }) {
       setSubject('');
       setBody('');
       setEmailsSent((prev) => prev + 1);
-      onEmailSent(); // Call the function to update the email count
+      onEmailSent(); 
     } catch (error) {
       if (error.response) {
         const errorMessage = error.response.data.message || error.response.data.error;

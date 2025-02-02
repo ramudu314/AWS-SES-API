@@ -2,6 +2,8 @@ package handler
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"sync"
 
 	"github.com/gin-contrib/cors"
@@ -23,7 +25,27 @@ type Stats struct {
 	EmailWarmUp bool
 }
 
-var stats = Stats{EmailLimit: 10, EmailWarmUp: true}
+var stats = Stats{
+	EmailLimit:  10,
+	EmailWarmUp: true,
+}
+
+func init() {
+	if limit := os.Getenv("EMAIL_LIMIT"); limit != "" {
+		// Parse the limit if set in the environment variable
+		parsedLimit, err := strconv.Atoi(limit)
+		if err == nil {
+			stats.EmailLimit = parsedLimit
+		}
+	}
+
+	if warmUp := os.Getenv("EMAIL_WARM_UP"); warmUp != "" {
+		// Parse warm-up flag if set in the environment variable
+		if warmUp == "false" {
+			stats.EmailWarmUp = false
+		}
+	}
+}
 
 // Handler function for the Go app, used in Vercel
 func Handler(w http.ResponseWriter, r *http.Request) {
