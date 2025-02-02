@@ -37,6 +37,8 @@ go run main.go
 The server will run on http://localhost:8080.
 
 ## API Endpoints
+
+````bash
 Send Email
 Endpoint: POST /sendEmail
 
