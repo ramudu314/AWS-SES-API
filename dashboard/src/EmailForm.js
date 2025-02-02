@@ -12,7 +12,7 @@ function EmailForm({ onEmailSent }) {
   const [emailWarmUp, setEmailWarmUp] = useState(false); 
 
   // Fetch the backend URL from environment variables
-  const backendURL = process.env.REACT_APP_BACKEND_URL || 'https://aws-ses-api-yw8u.vercel.app/';
+  const backendURL = process.env.REACT_APP_BACKEND_URL || 'https://backend-nlsuoydnv-ramudus-projects.vercel.app/';
 
   // Fetch email stats on component mount
   useEffect(() => {
