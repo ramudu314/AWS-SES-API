@@ -18,7 +18,7 @@ This is a simple mock API that simulates the AWS Simple Email Service (SES) usin
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone <https://github.com/ramudu314/AWS-SES-API.git>
    cd mock-ses-api/backend
 
 
@@ -32,7 +32,7 @@ go get -u github.com/gin-contrib/cors
 ## Running the API
 To run the API, use the following command:
 
-  ```bash
+bash
 go run main.go
 The server will run on http://localhost:8080.
 
