@@ -2,8 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"os"
-	"strconv"
 	"sync"
 
 	"github.com/gin-contrib/cors"
@@ -25,34 +23,20 @@ type Stats struct {
 	EmailWarmUp bool
 }
 
-var stats = Stats{
-	EmailLimit:  10,
-	EmailWarmUp: true,
-}
-
-func init() {
-	if limit := os.Getenv("EMAIL_LIMIT"); limit != "" {
-		// Parse the limit if set in the environment variable
-		parsedLimit, err := strconv.Atoi(limit)
-		if err == nil {
-			stats.EmailLimit = parsedLimit
-		}
-	}
-
-	if warmUp := os.Getenv("EMAIL_WARM_UP"); warmUp != "" {
-		// Parse warm-up flag if set in the environment variable
-		if warmUp == "false" {
-			stats.EmailWarmUp = false
-		}
-	}
-}
+var stats = Stats{EmailLimit: 10, EmailWarmUp: true}
 
 // Handler function for the Go app, used in Vercel
 func Handler(w http.ResponseWriter, r *http.Request) {
 	router := gin.Default()
 
-	// Enable CORS
-	router.Use(cors.Default())
+	// **Enable CORS with specific frontend origin**
+	config := cors.Config{
+		AllowOrigins:     []string{"https://aws-ses-api-fgq1.vercel.app"}, // Replace with your frontend URL
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+	}
+	router.Use(cors.New(config))
 
 	// Root route for testing
 	router.GET("/", func(c *gin.Context) {
@@ -76,7 +60,6 @@ func sendEmail(c *gin.Context) {
 		return
 	}
 
-	// Simulate email warming (only a few emails allowed during warm-up period)
 	stats.Lock()
 	defer stats.Unlock()
 
@@ -85,7 +68,6 @@ func sendEmail(c *gin.Context) {
 		return
 	}
 
-	// Simulate email sending
 	stats.EmailsSent++
 	c.JSON(http.StatusOK, gin.H{"message": "Email sent successfully", "to": email.To})
 }
