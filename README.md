@@ -32,7 +32,7 @@ go get -u github.com/gin-contrib/cors
 ## Running the API
 To run the API, use the following command:
 
-  ````bash
+  ``bash
 go run main.go
 The server will run on http://localhost:8080.
 
