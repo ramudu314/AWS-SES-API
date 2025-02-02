@@ -1,8 +1,8 @@
-package main
+package handler
 
 import (
-	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -17,6 +17,7 @@ type Email struct {
 
 // Stats struct to hold email statistics
 type Stats struct {
+	sync.Mutex
 	EmailsSent  int
 	EmailLimit  int
 	EmailWarmUp bool
@@ -24,8 +25,8 @@ type Stats struct {
 
 var stats = Stats{EmailLimit: 10, EmailWarmUp: true}
 
-// Create Gin router
-func createRouter() *gin.Engine {
+// Handler function for the Go app, used in Vercel
+func Handler(w http.ResponseWriter, r *http.Request) {
 	router := gin.Default()
 
 	// Enable CORS
@@ -41,7 +42,8 @@ func createRouter() *gin.Engine {
 	router.GET("/stats", getStats)
 	router.GET("/healthcheck", healthCheck)
 
-	return router
+	// Forward the request to Gin
+	router.ServeHTTP(w, r)
 }
 
 // sendEmail handles the sending of email (mock behavior)
@@ -53,6 +55,9 @@ func sendEmail(c *gin.Context) {
 	}
 
 	// Simulate email warming (only a few emails allowed during warm-up period)
+	stats.Lock()
+	defer stats.Unlock()
+
 	if stats.EmailWarmUp && stats.EmailsSent >= stats.EmailLimit {
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Email warm-up period active. Please try again later."})
 		return
@@ -65,6 +70,8 @@ func sendEmail(c *gin.Context) {
 
 // getStats returns the statistics of the mock SES API
 func getStats(c *gin.Context) {
+	stats.Lock()
+	defer stats.Unlock()
 	c.JSON(http.StatusOK, gin.H{
 		"emails_sent": stats.EmailsSent,
 		"email_limit": stats.EmailLimit,
@@ -74,18 +81,4 @@ func getStats(c *gin.Context) {
 // healthCheck checks if the API is alive
 func healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "healthy"})
-}
-
-// Vercel expects a handler to be exported for serverless
-func Handler(w http.ResponseWriter, r *http.Request) {
-	router := createRouter()
-	router.ServeHTTP(w, r)
-}
-
-func main() {
-	// Local testing: Run the server
-	// This should be disabled in production serverless environments like Vercel
-	if err := http.ListenAndServe(":8080", http.HandlerFunc(Handler)); err != nil {
-		log.Fatal("Failed to start the server: ", err)
-	}
 }
