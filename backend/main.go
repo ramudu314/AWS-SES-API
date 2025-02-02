@@ -1,14 +1,8 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -23,7 +17,6 @@ type Email struct {
 
 // Stats struct to hold email statistics
 type Stats struct {
-	sync.Mutex
 	EmailsSent  int
 	EmailLimit  int
 	EmailWarmUp bool
@@ -31,7 +24,8 @@ type Stats struct {
 
 var stats = Stats{EmailLimit: 10, EmailWarmUp: true}
 
-func main() {
+// Create Gin router
+func createRouter() *gin.Engine {
 	router := gin.Default()
 
 	// Enable CORS
@@ -47,33 +41,7 @@ func main() {
 	router.GET("/stats", getStats)
 	router.GET("/healthcheck", healthCheck)
 
-	// Create HTTP server
-	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
-	}
-
-	// Graceful shutdown logic
-	go func() {
-		log.Println("Starting mock SES API on :8080")
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("ListenAndServe failed:", err)
-		}
-	}()
-
-	// Wait for shutdown signal (Ctrl+C)
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	// Graceful shutdown
-	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
-	}
-	log.Println("Server exited")
+	return router
 }
 
 // sendEmail handles the sending of email (mock behavior)
@@ -85,9 +53,6 @@ func sendEmail(c *gin.Context) {
 	}
 
 	// Simulate email warming (only a few emails allowed during warm-up period)
-	stats.Lock()
-	defer stats.Unlock()
-
 	if stats.EmailWarmUp && stats.EmailsSent >= stats.EmailLimit {
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Email warm-up period active. Please try again later."})
 		return
@@ -100,8 +65,6 @@ func sendEmail(c *gin.Context) {
 
 // getStats returns the statistics of the mock SES API
 func getStats(c *gin.Context) {
-	stats.Lock()
-	defer stats.Unlock()
 	c.JSON(http.StatusOK, gin.H{
 		"emails_sent": stats.EmailsSent,
 		"email_limit": stats.EmailLimit,
@@ -111,4 +74,18 @@ func getStats(c *gin.Context) {
 // healthCheck checks if the API is alive
 func healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+}
+
+// Vercel expects a handler to be exported for serverless
+func Handler(w http.ResponseWriter, r *http.Request) {
+	router := createRouter()
+	router.ServeHTTP(w, r)
+}
+
+func main() {
+	// Local testing: Run the server
+	// This should be disabled in production serverless environments like Vercel
+	if err := http.ListenAndServe(":8080", http.HandlerFunc(Handler)); err != nil {
+		log.Fatal("Failed to start the server: ", err)
+	}
 }
