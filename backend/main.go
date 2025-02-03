@@ -33,7 +33,7 @@ func main() {
 
 	// Enable CORS
 	config := cors.Config{
-		AllowOrigins:     []string{"https://aws-ses-api-fgq1.vercel.app"}, // Update with your frontend URL
+		AllowOrigins:     []string{"https://aws-ses-api-lm1g.vercel.app"}, // Update with your frontend URL
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -68,12 +68,20 @@ func sendEmail(c *gin.Context) {
 	stats.Lock()
 	defer stats.Unlock()
 
+	// Check if email warm-up period is active
 	if stats.EmailWarmUp && stats.EmailsSent >= stats.EmailLimit {
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Email warm-up period active. Please try again later."})
 		return
 	}
 
+	// Simulate sending email logic
 	stats.EmailsSent++
+
+	// If the email limit is reached, disable the warm-up period
+	if stats.EmailsSent >= stats.EmailLimit {
+		stats.EmailWarmUp = false
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Email sent successfully", "to": email.To})
 }
 

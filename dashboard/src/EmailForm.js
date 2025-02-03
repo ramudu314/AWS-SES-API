@@ -12,7 +12,7 @@ function EmailForm({ onEmailSent }) {
   const [emailWarmUp, setEmailWarmUp] = useState(false); 
 
   // Fetch the backend URL from environment variables
-  const backendURL = process.env.REACT_APP_BACKEND_URL || 'https://backend-c6g6wudt2-ramudus-projects.vercel.app/';
+  const backendURL = process.env.REACT_APP_BACKEND_URL || 'https://aws-ses-api-10.onrender.com/';
 
   // Fetch email stats on component mount
   useEffect(() => {
@@ -21,6 +21,7 @@ function EmailForm({ onEmailSent }) {
         const response = await axios.get(`${backendURL}/stats`);
         setEmailsSent(response.data.emails_sent);
         setEmailLimit(response.data.email_limit);
+        setEmailWarmUp(response.data.email_warm_up); // Update to fetch email warm-up status
       } catch (error) {
         setMessage('Error fetching statistics: ' + error.message);
       }
@@ -85,7 +86,7 @@ function EmailForm({ onEmailSent }) {
             required
           />
         </div>
-        <button type="submit" disabled={emailsSent >= emailLimit}>
+        <button type="submit" disabled={emailsSent >= emailLimit || emailWarmUp}>
           Send Email
         </button>
       </form>
@@ -94,6 +95,7 @@ function EmailForm({ onEmailSent }) {
         <h3>Statistics</h3>
         <p>Emails Sent: {emailsSent}</p>
         <p>Email Limit: {emailLimit}</p>
+        <p>Email Warm-up: {emailWarmUp ? "Yes" : "No"}</p>
       </div>
 
       {message && <p>{message}</p>}
