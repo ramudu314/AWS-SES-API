@@ -50,7 +50,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080"
+		port = "10000"
 	}
 
 	fmt.Println("Server starting on port:", port)
