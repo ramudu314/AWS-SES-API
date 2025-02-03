@@ -64,12 +64,6 @@ Response:
 }
 
 
-## Error Responses:
-
-400 Bad Request: Invalid input parameters (e.g., missing to, subject, or body fields).
-
-429 Too Many Requests: Email sending limit exceeded during the warming-up period.
-
 2. Get Statistics
 Endpoint: GET /stats
 
