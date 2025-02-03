@@ -30,7 +30,7 @@ func main() {
 
 	// Enable CORS
 	config := cors.Config{
-		AllowOrigins:     []string{"https://aws-ses-api-lm1g.vercel.app"}, // Correct frontend URL
+		AllowOrigins:     []string{"https://aws-ses-api.vercel.app/"}, // Correct frontend URL
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
