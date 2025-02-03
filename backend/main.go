@@ -10,14 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Email struct to represent the email sending request
 type Email struct {
 	To      string `json:"to" binding:"required,email"`
 	Subject string `json:"subject" binding:"required"`
 	Body    string `json:"body" binding:"required"`
 }
 
-// Stats struct to hold email statistics
 type Stats struct {
 	sync.Mutex
 	EmailsSent  int
@@ -28,19 +26,17 @@ type Stats struct {
 var stats = Stats{EmailLimit: 10, EmailWarmUp: true}
 
 func main() {
-	// Use Gin router
 	router := gin.Default()
 
 	// Enable CORS
 	config := cors.Config{
-		AllowOrigins:     []string{"https://aws-ses-api-lm1g.vercel.app"}, // Update with your frontend URL
+		AllowOrigins:     []string{"https://aws-ses-api-lm1g.vercel.app"}, // Correct frontend URL
 		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
 	}
 	router.Use(cors.New(config))
 
-	// Routes
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "Welcome to the mock SES API!"})
 	})
@@ -57,7 +53,6 @@ func main() {
 	router.Run(":" + port)
 }
 
-// sendEmail handles the sending of email (mock behavior)
 func sendEmail(c *gin.Context) {
 	var email Email
 	if err := c.ShouldBindJSON(&email); err != nil {
@@ -68,24 +63,15 @@ func sendEmail(c *gin.Context) {
 	stats.Lock()
 	defer stats.Unlock()
 
-	// Check if email warm-up period is active
 	if stats.EmailWarmUp && stats.EmailsSent >= stats.EmailLimit {
 		c.JSON(http.StatusTooManyRequests, gin.H{"error": "Email warm-up period active. Please try again later."})
 		return
 	}
 
-	// Simulate sending email logic
 	stats.EmailsSent++
-
-	// If the email limit is reached, disable the warm-up period
-	if stats.EmailsSent >= stats.EmailLimit {
-		stats.EmailWarmUp = false
-	}
-
 	c.JSON(http.StatusOK, gin.H{"message": "Email sent successfully", "to": email.To})
 }
 
-// getStats returns the statistics of the mock SES API
 func getStats(c *gin.Context) {
 	stats.Lock()
 	defer stats.Unlock()
@@ -95,7 +81,6 @@ func getStats(c *gin.Context) {
 	})
 }
 
-// healthCheck checks if the API is alive
 func healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 }
